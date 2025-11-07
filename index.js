@@ -1,5 +1,6 @@
 import { DataBase } from "./db/index.js";
 import { server } from "./server.js";
+import 'dotenv/config'
 
 
 async function startServer() {

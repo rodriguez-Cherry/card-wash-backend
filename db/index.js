@@ -10,11 +10,12 @@ export class DataBase {
       return this.knex;
     }
 
+    this.knex = knexDB;
+
     try {
-      this.knex = knexDB();
-      await this.knex.raw("select ");
+      await this.knex.raw("select 1+1 as result");
+      console.log("DB connected")
       this.initialized = true;
-      return this.knex;
     } catch (error) {
       console.log(error);
     }
@@ -22,7 +23,7 @@ export class DataBase {
 
   getDB() {
     if (!this.initialized) {
-      this.knex = knexDB();
+      this.knex = knexDB;
     }
 
     return this.knex;

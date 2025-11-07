@@ -6,6 +6,8 @@ export const server = express()
 
 
 
+server.use( express.json() )
+
 server.use('/api/access', routerAccess);
-server.use('/api/access', routerUsers);
+server.use('/api/users', routerUsers);
 
