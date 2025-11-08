@@ -7,7 +7,7 @@ export const routerAccess = Router();
 
 const db = new DataBase().getDB();
 
-routerAccess.get("/login", async (req, res) => {
+routerAccess.post("/login", async (req, res) => {
   const { email, contrasena } = req?.body || {};
 
   if (!email || !contrasena) {
@@ -74,14 +74,14 @@ routerAccess.get("/login", async (req, res) => {
 routerAccess.post("/signup", async (req, res) => {
   const { nombre, email, contrasena } = req?.body || {};
 
-  if (!nombre || !email || !contrasena) {
+   if (!nombre || !email || !contrasena) {
     const propiedadesNulas = getNullValues({ nombre, email, contrasena });
     const cuantasNulas = propiedadesNulas.split(",").length;
     return res.status(400).json({
       ok: false,
       error:
         cuantasNulas > 1
-          ? `${propiedadesNulas} esta vacio `
+          ? `${propiedadesNulas} esta vacia `
           : `${propiedadesNulas} estan vacio `,
     });
   }
@@ -100,7 +100,7 @@ routerAccess.post("/signup", async (req, res) => {
 
   if (existeUsuario) {
     return res.status(400).json({
-      data: "this user exist already. Por favor inicie sesion",
+      data: "Este usuario ya existe. Por favor inicie sesion",
     });
   }
 
