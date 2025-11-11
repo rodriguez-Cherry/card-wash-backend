@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { DataBase } from "../db/index.js";
+import { DataBase } from '../db/index.js'
 import { createToken } from "../utils/createToken.js";
 import bcrypt from "bcrypt";
 

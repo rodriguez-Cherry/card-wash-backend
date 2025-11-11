@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { DataBase } from "../db/index.js";
+import { verifyToken } from "../utils/verificarToken.js";
 
 const db = new DataBase().getDB();
 export const routerUsers = Router();
 
-routerUsers.get("/cars", async (req, res) => {
+routerUsers.get("/cars", verifyToken, async (req, res) => {
   try {
     const carros = await db("carros").select("*");
     return res.status(200).json({
@@ -13,7 +14,7 @@ routerUsers.get("/cars", async (req, res) => {
   } catch (error) {}
 });
 
-routerUsers.get("/car/:id", async (req, res) => {
+routerUsers.get("/car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   try {
     const carros = await db("carros").where({ user_id: id }).select("*");
@@ -23,7 +24,7 @@ routerUsers.get("/car/:id", async (req, res) => {
   } catch (error) {}
 });
 
-routerUsers.get("/servicios", async (req, res) => {
+routerUsers.get("/servicios", verifyToken, async (req, res) => {
   try {
     const servicios = await db("servicios").select("*");
     return res.status(200).json({
@@ -32,9 +33,9 @@ routerUsers.get("/servicios", async (req, res) => {
   } catch (error) {}
 });
 
-routerUsers.post("/book-service", (req, res) => {});
+routerUsers.post("/book-service", verifyToken, (req, res) => {});
 
-routerUsers.post("/add-car", async (req, res) => {
+routerUsers.post("/add-car", verifyToken, async (req, res) => {
   const { color, marca, modelo, user_id, año } = req.body;
   try {
     const car = {

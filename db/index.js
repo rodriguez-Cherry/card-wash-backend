@@ -1,4 +1,4 @@
-import { knexDB } from './knex.js'
+import { knexDB } from "./knex.js";
 export class DataBase {
   constructor() {
     this.knex = null;
@@ -14,7 +14,7 @@ export class DataBase {
 
     try {
       await this.knex.raw("select 1+1 as result");
-      console.log("DB connected")
+      console.log("DB connected");
       this.initialized = true;
     } catch (error) {
       console.log(error);
