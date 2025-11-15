@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { DataBase } from '../db/index.js'
+import { DataBase } from "../db/index.js";
 import { createToken } from "../utils/createToken.js";
 import bcrypt from "bcrypt";
+import { verifyToken } from "../utils/verificarToken.js";
 
 export const routerAccess = Router();
 
@@ -42,7 +43,7 @@ routerAccess.post("/login", async (req, res) => {
       );
 
       if (!esLaMismaContrasena) {
-       return res.status(400).json({
+        return res.status(400).json({
           data: "El usuario/contrasena no coinciden con el usuario",
         });
       }
@@ -60,12 +61,12 @@ routerAccess.post("/login", async (req, res) => {
         data: userData,
       });
     } else {
-     return res.status(400).json({
+      return res.status(400).json({
         data: "Este usuario no existe",
       });
     }
   } catch (error) {
-   return res.status(500).json({
+    return res.status(500).json({
       data: "Intente mas tarde",
     });
   }
@@ -74,7 +75,7 @@ routerAccess.post("/login", async (req, res) => {
 routerAccess.post("/signup", async (req, res) => {
   const { nombre, email, contrasena } = req?.body || {};
 
-   if (!nombre || !email || !contrasena) {
+  if (!nombre || !email || !contrasena) {
     const propiedadesNulas = getNullValues({ nombre, email, contrasena });
     const cuantasNulas = propiedadesNulas.split(",").length;
     return res.status(400).json({
@@ -125,6 +126,18 @@ routerAccess.post("/signup", async (req, res) => {
     res.status(500).json({
       error,
     });
+  }
+});
+
+routerAccess.get("/verificar-token", verifyToken, async (req, res) => {
+  try {
+    res.status(200).json({
+      data: "autenticado"
+    })
+  } catch (error) {
+    res.status(400).json({
+      data: "no-autenticado"
+    })
   }
 });
 
