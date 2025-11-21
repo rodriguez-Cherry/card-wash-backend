@@ -73,10 +73,16 @@ routerAccess.post("/login", async (req, res) => {
 });
 
 routerAccess.post("/signup", async (req, res) => {
-  const { nombre, email, contrasena } = req?.body || {};
+  const { nombre, email, contrasena, telefono, direccion } = req?.body || {};
 
-  if (!nombre || !email || !contrasena) {
-    const propiedadesNulas = getNullValues({ nombre, email, contrasena });
+  if (!nombre || !email || !contrasena || !telefono || !direccion) {
+    const propiedadesNulas = getNullValues({
+      nombre,
+      email,
+      contrasena,
+      telefono,
+      direccion,
+    });
     const cuantasNulas = propiedadesNulas.split(",").length;
     return res.status(400).json({
       ok: false,
@@ -110,16 +116,23 @@ routerAccess.post("/signup", async (req, res) => {
     const token = await createToken({ email, nombre });
     const salt = bcrypt.genSaltSync(10);
     const hasPassword = bcrypt.hashSync(contrasena, salt);
-
     await db("usuarios").insert({
       nombre,
       email,
       contrasena: hasPassword,
+      telefono,
+      direccion,
       rol: "cliente",
     });
-    res.status(201).json({
-      data: "hello",
+
+    const row = await db("usuarios")
+      .select("nombre", "email", "telefono", "direccion", "rol")
+      .where({ email })
+      .first();
+
+    return res.status(201).json({
       token,
+      data: row,
     });
   } catch (error) {
     console.log(error);
@@ -132,12 +145,12 @@ routerAccess.post("/signup", async (req, res) => {
 routerAccess.get("/verificar-token", verifyToken, async (req, res) => {
   try {
     res.status(200).json({
-      data: "autenticado"
-    })
+      data: "autenticado",
+    });
   } catch (error) {
     res.status(400).json({
-      data: "no-autenticado"
-    })
+      data: "no-autenticado",
+    });
   }
 });
 
