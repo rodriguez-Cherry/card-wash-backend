@@ -21,3 +21,12 @@ routerAdmin.get("/clientes", verifyToken, async (req, res) => {
     console.log(error);
   }
 });
+
+routerAdmin.get("/cars", verifyToken, async (req, res) => {
+  try {
+    const carros = await db("carros").select("*");
+    return res.status(200).json({
+      data: carros,
+    });
+  } catch (error) {}
+});

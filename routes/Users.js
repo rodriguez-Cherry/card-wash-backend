@@ -16,6 +16,8 @@ routerUsers.get("/cars", verifyToken, async (req, res) => {
 
 routerUsers.get("/car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
+
+  console.log("id", id);
   try {
     const carros = await db("carros").where({ user_id: id }).select("*");
     return res.status(200).json({
@@ -31,6 +33,24 @@ routerUsers.get("/servicios", verifyToken, async (req, res) => {
       data: servicios,
     });
   } catch (error) {}
+});
+
+routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const citas = await db("citas as ci")
+      .join("carros as ca", "ci.user_id", "ca.user_id")
+      .join("servicios as se", "ci.servicio_id", "se.id")
+      .where("ci.user_id", userId)
+      .select("*");
+
+    return res.status(200).json({
+      data: citas,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Error ");
+  }
 });
 
 routerUsers.post("/book-service", verifyToken, (req, res) => {});
