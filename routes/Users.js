@@ -28,7 +28,9 @@ routerUsers.get("/car/:id", verifyToken, async (req, res) => {
 
 routerUsers.get("/servicios", verifyToken, async (req, res) => {
   try {
-    const servicios = await db("servicios").select("*");
+    const servicios = await db("servicios")
+      .select("*")
+      .orderBy("precio", "asce");
     return res.status(200).json({
       data: servicios,
     });
@@ -53,7 +55,25 @@ routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
   }
 });
 
-routerUsers.post("/book-service", verifyToken, (req, res) => {});
+routerUsers.post("/agendar", verifyToken, async (req, res) => {
+  const { fecha, user_id, carro_id, servicio_id } = req.body;
+
+  if (!fecha || !user_id || !carro_id || !servicio_id) {
+    return res.status(400).json("Payload invalido");
+  }
+  try {
+    await db("citas").insert({
+      fecha,
+      user_id,
+      carro_id,
+      servicio_id,
+    });
+    return res.status(200).json("Cita agendata");
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json("Error");
+  }
+});
 
 routerUsers.post("/add-car", verifyToken, async (req, res) => {
   const { color, marca, modelo, user_id, año } = req.body;
@@ -67,6 +87,20 @@ routerUsers.post("/add-car", verifyToken, async (req, res) => {
     };
 
     await db("carros").insert(car);
+    res.status(200).json("Added");
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+routerUsers.post("/eliminar/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json("No id proveido");
+  }
+  try {
+    await db("carros").delete().where({ id });
     res.status(200).json("Added");
   } catch (error) {
     console.log(error);
