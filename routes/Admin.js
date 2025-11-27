@@ -7,7 +7,7 @@ const db = new DataBase().getDB();
 
 routerAdmin.get("/clientes", verifyToken, async (req, res) => {
   try {
-    const clientes = await db("clientes").select("*");
+    const clientes = await db("clientes").where({ rol: "cliente" }).select("*");
 
     const clientesFormateado = clientes.map((cliente) => {
       delete cliente.contrasena;

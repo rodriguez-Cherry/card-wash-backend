@@ -3,6 +3,7 @@ import { DataBase } from "../db/index.js";
 import { createToken } from "../utils/createToken.js";
 import bcrypt from "bcrypt";
 import { verifyToken } from "../utils/verificarToken.js";
+import { body, validationResult } from "express-validator";
 
 export const routerAccess = Router();
 
@@ -72,9 +73,16 @@ routerAccess.post("/login", async (req, res) => {
   }
 });
 
-routerAccess.post("/signup", async (req, res) => {
+routerAccess.post("/signup", body("email").isEmail(), async (req, res) => {
   const { nombre, email, contrasena, telefono, direccion } = req?.body || {};
 
+  const result = validationResult(req);
+
+  if (result) {
+    return res.status(400).json({
+      data: "El email no es correcto",
+    });
+  }
   if (!nombre || !email || !contrasena || !telefono || !direccion) {
     const propiedadesNulas = getNullValues({
       nombre,
