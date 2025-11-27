@@ -41,7 +41,7 @@ routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
   const { userId } = req.params;
   try {
     const citas = await db("citas as ci")
-      .join("carros as ca", "ci.user_id", "ca.user_id")
+      // .join("carros as ca", "ci.user_id", "ca.user_id")
       .join("servicios as se", "ci.servicio_id", "se.id")
       .where("ci.user_id", userId)
       .select("*");
@@ -56,22 +56,25 @@ routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
 });
 
 routerUsers.post("/agendar", verifyToken, async (req, res) => {
-  const { fecha, user_id, carro_id, servicio_id } = req.body;
+  const { fecha, user_id, carros_id, servicio_id } = req.body;
 
-  if (!fecha || !user_id || !carro_id || !servicio_id) {
+  if (!fecha || !user_id || !carros_id?.length || !servicio_id) {
     return res.status(400).json("Payload invalido");
   }
   try {
     await db("citas").insert({
       fecha,
       user_id,
-      carro_id,
+      carros_ids: carros_id,
+
       servicio_id,
     });
     return res.status(200).json("Cita agendata");
   } catch (error) {
     console.log(error);
-    return res.status(500).json("Error");
+    return res
+      .status(500)
+      .json("Error al agendar su servicio Intente mas tarde");
   }
 });
 
@@ -101,7 +104,7 @@ routerUsers.post("/eliminar/:id", verifyToken, async (req, res) => {
   }
   try {
     await db("carros").delete().where({ id });
-    res.status(200).json("Added");
+    res.status(200).json("deleted");
   } catch (error) {
     console.log(error);
   }
