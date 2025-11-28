@@ -137,3 +137,17 @@ routerAdmin.get("/ordenes", verifyToken, async (req, res) => {
     res.status(500).json("Error ");
   }
 });
+
+routerAdmin.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) return res.status(400).json("No id ");
+
+  try {
+    await db("citas").delete().where({ id: id });
+
+    res.status(200).json("Carro eliminado");
+  } catch (error) {
+    console.log(error);
+  }
+});

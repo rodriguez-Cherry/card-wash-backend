@@ -102,6 +102,7 @@ routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
     await db("citas").delete().where({ id });
     res.status(200).json("deleted");
   } catch (error) {
+    console.log(error)
     res.status(500).json("Error al eliminar su orden Intente mas tarde");
   }
 });
