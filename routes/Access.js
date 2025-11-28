@@ -74,19 +74,28 @@ routerAccess.post("/login", async (req, res) => {
 });
 
 routerAccess.post("/signup", body("email").isEmail(), async (req, res) => {
-  const { nombre, email, contrasena, telefono, direccion } = req?.body || {};
+  const { nombre, email, apellido, contrasena, telefono, direccion } =
+    req?.body || {};
 
-  const result = validationResult(req);
+  // const result = validationResult(req);
 
-  if (result) {
-    return res.status(400).json({
-      data: "El email no es correcto",
-    });
-  }
-  if (!nombre || !email || !contrasena || !telefono || !direccion) {
+  // if (result.e) {
+  //   return res.status(400).json({
+  //     data: "El email no es correcto",
+  //   });
+  // }
+  if (
+    !nombre ||
+    !email ||
+    !apellido ||
+    !contrasena ||
+    !telefono ||
+    !direccion
+  ) {
     const propiedadesNulas = getNullValues({
       nombre,
       email,
+      apellido,
       contrasena,
       telefono,
       direccion,
@@ -126,15 +135,25 @@ routerAccess.post("/signup", body("email").isEmail(), async (req, res) => {
     const hasPassword = bcrypt.hashSync(contrasena, salt);
     await db("usuarios").insert({
       nombre,
+      apellido,
       email,
       contrasena: hasPassword,
       telefono,
       direccion,
       rol: "cliente",
+      logueado: 1,
     });
 
     const row = await db("usuarios")
-      .select("nombre", "email", "telefono", "direccion", "rol")
+      .select(
+        "nombre",
+        "email",
+        "telefono",
+        "direccion",
+        "rol",
+        "id",
+        "apellido"
+      )
       .where({ email })
       .first();
 
