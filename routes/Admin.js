@@ -7,7 +7,9 @@ const db = new DataBase().getDB();
 
 routerAdmin.get("/clientes", verifyToken, async (req, res) => {
   try {
-    const clientes = await db("usuarios").where({ rol: "cliente" }).select("*");
+    const clientes = await db("usuarios as us")
+      .where({ rol: "cliente" })
+      .select("*");
 
     const clientesFormateado = clientes.map((cliente) => {
       delete cliente.contrasena;
@@ -62,9 +64,9 @@ routerAdmin.delete("/eliminar-cliente/:id", verifyToken, async (req, res) => {
   if (!id) return res.status(400).json("No id ");
 
   try {
-    await db("usuarios").delete().where({ id });
-    await db("carros").delete().where({ user_id: id });
     await db("citas").delete().where({ user_id: id });
+    await db("carros").delete().where({ user_id: id });
+    await db("usuarios").delete().where({ id });
 
     res.status(200).json("Cliente eliminado");
   } catch (error) {
