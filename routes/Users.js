@@ -39,7 +39,7 @@ routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
   } catch (error) {}
 });
 
-routerUsers.get("/servicios", verifyToken, async (req, res) => {
+routerUsers.get("/servicios", async (req, res) => {
   try {
     const servicios = await db("servicios")
       .select("*")

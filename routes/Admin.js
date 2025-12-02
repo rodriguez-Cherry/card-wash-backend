@@ -78,7 +78,7 @@ routerAdmin.get("/carros", verifyToken, async (req, res) => {
   try {
     const carros = await db("carros as ca")
       .leftJoin("usuarios as us", "ca.user_id", "us.id")
-      .select("ca.*", "us.nombre");
+      .select("ca.*", "us.nombre", "us.apellido");
 
     return res.status(200).json({
       data: carros,
@@ -128,7 +128,8 @@ routerAdmin.get("/ordenes", verifyToken, async (req, res) => {
         "se.tipo",
         "se.precio",
         "se.tiempo_estimado",
-        "us.nombre"
+        "us.nombre",
+        "us.apellido"
       );
 
     return res.status(200).json({
@@ -151,5 +152,26 @@ routerAdmin.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
     res.status(200).json("Carro eliminado");
   } catch (error) {
     console.log(error);
+  }
+});
+
+// Cajero rutas
+
+routerAdmin.put("/update-ordenes", verifyToken, async (req, res) => {
+  const { id, fecha, estado, user_id, servicio_id, carros_ids } = req.body;
+
+  if (!id || !fecha || !estado || !user_id || !servicio_id || !carros_ids)
+    return res.status.json("No payload");
+
+  try {
+    const cita = { id, fecha, estado, user_id, servicio_id, carros_ids };
+    const citas = await db("citas").update(cita).where({id });
+
+    return res.status(200).json({
+      data: citas,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Error ");
   }
 });
