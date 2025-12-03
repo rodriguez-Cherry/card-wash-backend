@@ -1,14 +1,13 @@
 import { Router } from "express";
 import { DataBase } from "../db/index.js";
 import { verifyToken } from "../utils/verificarToken.js";
-import { body } from "express-validator";
 
 const db = new DataBase().getDB();
 export const routerUsers = Router();
 
 routerUsers.get("/cars", verifyToken, async (req, res) => {
   try {
-    const carros = await db("carros").select("*");
+    const carros = await db("carros").where({ estado: "activo" }).select("*");
     return res.status(200).json({
       data: carros,
     });
@@ -20,7 +19,10 @@ routerUsers.get("/car/:id", verifyToken, async (req, res) => {
 
   console.log("id car", id);
   try {
-    const carros = await db("carros").where({ user_id: id }).select("*");
+    const carros = await db("carros")
+      .where({ user_id: id })
+      .andWhere({ estado: "activo" })
+      .select("*");
     return res.status(200).json({
       data: carros,
     });
@@ -32,7 +34,11 @@ routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
 
   console.log("id car", id);
   try {
-    const carro = await db("carros").where({ id }).select("*").first();
+    const carro = await db("carros")
+      .where({ id })
+      .andWhere({ estado: "activo" })
+      .select("*")
+      .first();
     return res.status(200).json({
       data: carro,
     });
@@ -102,13 +108,13 @@ routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
     await db("citas").delete().where({ id });
     res.status(200).json("deleted");
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json("Error al eliminar su orden Intente mas tarde");
   }
 });
 
 routerUsers.post("/add-car", verifyToken, async (req, res) => {
-  const { color, marca, modelo, user_id, año } = req.body;
+  const { color, marca, modelo, user_id, año, estado } = req.body;
   try {
     const car = {
       color,
@@ -116,6 +122,7 @@ routerUsers.post("/add-car", verifyToken, async (req, res) => {
       modelo,
       user_id,
       año,
+      estado,
     };
 
     await db("carros").insert(car);
@@ -142,16 +149,18 @@ routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
   }
 });
 
-routerUsers.post("/eliminar/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
+// routerUsers.post("/eliminar/:id", verifyToken, async (req, res) => {
+//   const { id } = req.params;
+//   const { color, marca, modelo, user_id, año } = req.body;
+//   if (!id) {
+//     return res.status(400).json("No id proveido");
+//   }
+//   try {
+//     const payload = { color, marca, modelo, user_id, año, estado: "inactivo" };
 
-  if (!id) {
-    return res.status(400).json("No id proveido");
-  }
-  try {
-    await db("carros").delete().where({ id });
-    res.status(200).json("deleted");
-  } catch (error) {
-    console.log(error);
-  }
-});
+//     await db("carros").update(payload).where({ id: id });
+//     res.status(200).json("deleted");
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });

@@ -39,6 +39,29 @@ routerAdmin.get("/clientes-no-registrados", verifyToken, async (req, res) => {
     console.log(error);
   }
 });
+routerAdmin.get("/ordenes", verifyToken, async (req, res) => {
+  try {
+    const citas = await db("citas as ci")
+      .leftJoin("servicios as se", "ci.servicio_id", "se.id")
+      .leftJoin("usuarios as us", "ci.user_id", "us.id")
+      .select(
+        "ci.*",
+        "se.tipo",
+        "se.precio",
+        "se.tiempo_estimado",
+        "us.nombre",
+        "us.apellido"
+      );
+
+    return res.status(200).json({
+      data: citas,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json("Error ");
+  }
+});
+
 routerAdmin.post("/agregar-cliente", verifyToken, async (req, res) => {
   const { nombre, apellido, telefono, direccion, rol } = req.body;
 
@@ -95,6 +118,7 @@ routerAdmin.post("/add-car", verifyToken, async (req, res) => {
       modelo,
       user_id,
       año,
+      estado: "activo",
     };
 
     await db("carros").insert(car);
@@ -104,42 +128,21 @@ routerAdmin.post("/add-car", verifyToken, async (req, res) => {
   }
 });
 
-routerAdmin.delete("/eliminar-carro/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
+// routerAdmin.delete("/eliminar-carro/:id", verifyToken, async (req, res) => {
+//   const { id } = req.params;
+//   const { color, marca, modelo, user_id, año } = req.body;
+//   if (!id) return res.status(400).json("No id ");
 
-  if (!id) return res.status(400).json("No id ");
+//   try {
+//     const payload = { color, marca, modelo, user_id, año, estado: "inactivo" };
 
-  try {
-    await db("carros").delete().where({ id: id });
+//     await db("carros").update(payload).where({ id: id });
 
-    res.status(200).json("Carro eliminado");
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-routerAdmin.get("/ordenes", verifyToken, async (req, res) => {
-  try {
-    const citas = await db("citas as ci")
-      .leftJoin("servicios as se", "ci.servicio_id", "se.id")
-      .leftJoin("usuarios as us", "ci.user_id", "us.id")
-      .select(
-        "ci.*",
-        "se.tipo",
-        "se.precio",
-        "se.tiempo_estimado",
-        "us.nombre",
-        "us.apellido"
-      );
-
-    return res.status(200).json({
-      data: citas,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json("Error ");
-  }
-});
+//     res.status(200).json("Carro actualizado!");
+//   } catch (error) {
+//     console.log(error);
+//   }
+// });
 
 routerAdmin.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
@@ -165,7 +168,7 @@ routerAdmin.put("/update-ordenes", verifyToken, async (req, res) => {
 
   try {
     const cita = { id, fecha, estado, user_id, servicio_id, carros_ids };
-    const citas = await db("citas").update(cita).where({id });
+    const citas = await db("citas").update(cita).where({ id });
 
     return res.status(200).json({
       data: citas,
