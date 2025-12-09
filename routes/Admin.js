@@ -50,7 +50,8 @@ routerAdmin.get("/ordenes", verifyToken, async (req, res) => {
         "se.precio",
         "se.tiempo_estimado",
         "us.nombre",
-        "us.apellido"
+        "us.apellido",
+        "us.telefono"
       );
 
     return res.status(200).json({
@@ -101,7 +102,8 @@ routerAdmin.get("/carros", verifyToken, async (req, res) => {
   try {
     const carros = await db("carros as ca")
       .leftJoin("usuarios as us", "ca.user_id", "us.id")
-      .select("ca.*", "us.nombre", "us.apellido");
+      .select("ca.*", "us.nombre", "us.apellido", "us.telefono")
+      .where({ estado: "activo" });
 
     return res.status(200).json({
       data: carros,
@@ -151,8 +153,7 @@ routerAdmin.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
 
   try {
     await db("citas").delete().where({ id: id });
-
-    res.status(200).json("Carro eliminado");
+    res.status(200).json("Cita eliminado");
   } catch (error) {
     console.log(error);
   }
