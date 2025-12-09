@@ -5,14 +5,14 @@ import { verifyToken } from "../utils/verificarToken.js";
 const db = new DataBase().getDB();
 export const routerUsers = Router();
 
-routerUsers.get("/cars", verifyToken, async (req, res) => {
-  try {
-    const carros = await db("carros").where({ estado: "activo" }).select("*");
-    return res.status(200).json({
-      data: carros,
-    });
-  } catch (error) {}
-});
+// routerUsers.get("/cars", verifyToken, async (req, res) => {
+//   try {
+//     const carros = await db("carros").where({ estado: "activo" }).select("*");
+//     return res.status(200).json({
+//       data: carros,
+//     });
+//   } catch (error) {}
+// });
 
 routerUsers.get("/car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
@@ -34,11 +34,7 @@ routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
 
   console.log("id car", id);
   try {
-    const carro = await db("carros")
-      .where({ id })
-      .andWhere({ estado: "activo" })
-      .select("*")
-      .first();
+    const carro = await db("carros").where({ id }).select("*").first();
     return res.status(200).json({
       data: carro,
     });
@@ -62,7 +58,14 @@ routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
     const citas = await db("citas as ci")
       .where("ci.user_id", userId)
       .leftJoin("servicios as se", "ci.servicio_id", "se.id")
-      .select("ci.*", "se.tipo", "se.precio", "se.tiempo_estimado");
+      .leftJoin("usuarios as us", "ci.user_id", "us.id")
+      .select(
+        "ci.*",
+        "se.tipo",
+        "se.precio",
+        "se.tiempo_estimado",
+        "us.telefono"
+      );
     // .join("carros as ca", "ci.user_id", "ca.user_id")
     // .join("servicios as se", "ci.servicio_id", "se.id")
 
@@ -133,14 +136,35 @@ routerUsers.post("/add-car", verifyToken, async (req, res) => {
 });
 routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
-  // const { color, marca, modelo, user_id, año } = req.body;
+  const { color, marca, modelo, user_id, año, estado } = req.body;
   if (!id) {
     return res.status(400).json({
       data: "No carro id proveido",
     });
   }
   try {
-    await db("carros").where({ id }).update(req.body);
+    const todasCitas = await db("citas").select("*");
+
+    const todasCitasActivas = todasCitas.filter((todaActiva) =>
+      ["pendiente", "en proceso"].includes(todaActiva?.estado)
+    );
+
+    const citasRelacionadas = todasCitasActivas?.filter((citas) =>
+      citas.carros_ids.includes(id)
+    );
+
+    if (citasRelacionadas.length > 0) {
+      citasRelacionadas.forEach(async (cita) => {
+        const citaActualizada = {
+          ...cita,
+          estado: "cancelado",
+        };
+        await db("citas").update(citaActualizada).where({ id: cita.id });
+      });
+    }
+
+    const payload = { color, marca, modelo, user_id, año, estado };
+    await db("carros").where({ id }).update(payload);
     res.status(200).json("Carro actualizado!");
   } catch (error) {
     return res.status(500).json({
@@ -148,6 +172,51 @@ routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
     });
   }
 });
+routerUsers.put("/actualizar-carro/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { color, marca, modelo, user_id, año, estado } = req.body;
+  if (!id) {
+    return res.status(400).json({
+      data: "No carro id proveido",
+    });
+  }
+  try {
+    const payload = { color, marca, modelo, user_id, año, estado };
+    await db("carros").where({ id }).update(payload);
+    res.status(200).json("Carro actualizado!");
+  } catch (error) {
+    return res.status(500).json({
+      data: "No pudo ser actualizado!",
+    });
+  }
+});
+
+// routerUsers.get("/all-cars", async (req, res) => {
+//   const id = "ab9a9974-cfe1-11f0-9a7a-c03eba484fce";
+//   try {
+//     const todasCitas = await db("citas").select("*");
+
+//     const todasCitasActivas = todasCitas.filter((todaActiva) =>
+//       ["pendiente", "en proceso"].includes(todaActiva?.estado)
+//     );
+
+//     const citasRelacionadas = todasCitasActivas?.filter((citas) =>
+//       citas.carros_ids.includes(id)
+//     );
+
+//     if (citasRelacionadas.length > 0) {
+//       citasRelacionadas.forEach(async (cita) => {
+//         const citaActualizada = {
+//           ...cita,
+//           estado: "cancelado",
+//         };
+//         await db("citas").update(citaActualizada).where({ id: cita.id });
+//       });
+//     }
+
+//     return res.json({ todasCitasActivas, citasRelacionadas });
+//   } catch (error) {}
+// });
 
 // routerUsers.post("/eliminar/:id", verifyToken, async (req, res) => {
 //   const { id } = req.params;

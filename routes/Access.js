@@ -140,7 +140,7 @@ routerAccess.post("/signup", body("email").isEmail(), async (req, res) => {
       contrasena: hasPassword,
       telefono,
       direccion,
-      rol: "cliente",
+      rol: "cliente",  // admin / cajero
       logueado: 1,
     });
 

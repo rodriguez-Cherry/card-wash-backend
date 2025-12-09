@@ -2,6 +2,7 @@ import knexModule from 'knex'
 import 'dotenv/config'
 export const knexDB = knexModule({
   client: "mysql2",
+  // variables de connection
   connection: {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -10,3 +11,4 @@ export const knexDB = knexModule({
     database: process.env.DB_NAME,
   },
 });
+
