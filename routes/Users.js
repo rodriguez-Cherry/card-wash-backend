@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { DataBase } from "../db/index.js";
 import { verifyToken } from "../utils/verificarToken.js";
+import { obtenerEquiposDisponibles } from "../utils/obtenerEquiposDisponibles.js";
+import crypto from "crypto"
 
 const db = new DataBase().getDB();
 export const routerUsers = Router();
@@ -41,13 +43,29 @@ routerUsers.get("/servicios", async (req, res) => {
   } catch (error) {}
 });
 
+routerUsers.post("/add-car", verifyToken, async (req, res) => {
+  const { placa, color, marca, modelo, user_id, año } = req.body;
+  try {
+    const car = {
+      placa,
+      color,
+      marca,
+      modelo,
+      user_id,
+      año,
+    };
+
+    await db("carros").insert(car);
+    res.status(200).json("Added");
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 // TODO
 routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
   const { userId } = req.params;
   try {
-
-
-
     const citas = await db("citas as ci")
       .where("ci.user_id", userId)
       .leftJoin("servicios as se", "ci.servicio_id", "se.id")
@@ -72,20 +90,60 @@ routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
 });
 
 // TODO
-routerUsers.post("/agendar", verifyToken, async (req, res) => {
-  const { fecha, user_id, carros_id, servicio_id } = req.body;
+routerUsers.post("/agendar", async (req, res) => {
+  const { fecha, hora_inicio, hora_fin, estado, carro_placas, servicio_id } =
+    req.body || {};
 
-  if (!fecha || !user_id || !carros_id?.length || !servicio_id) {
+  if (
+    !fecha ||
+    !hora_inicio ||
+    !hora_fin ||
+    !carro_placas?.length ||
+    !servicio_id
+  ) {
     return res.status(400).json("Payload invalido");
   }
-  try {
-    await db("citas").insert({
-      fecha,
-      user_id,
-      carros_ids: carros_id,
 
-      servicio_id,
+  try {
+      const uuid = crypto.randomUUID();
+
+    // insertar en citas tabla
+    const cita = await db("citas")
+      .insert({
+        cita_id: uuid,
+        fecha,
+        hora_inicio,
+        hora_fin,
+        estado,
+        servicio_id,
+      })
+
+    // insertar carros en carro cita tabla
+    carro_placas.forEach(async (placa) => {
+      await db("carro_cita").insert({
+        placa,
+        cita_id: uuid,
+      });
     });
+
+    // insertar equipo_id, cita_id y placa en equipo_vehiculo_cita tabla
+    const { equiposDisponibles } = await obtenerEquiposDisponibles(
+      fecha,
+      hora_inicio,
+      hora_fin
+    );
+
+    for (let index = 0; index < carro_placas.length; index++) {
+      const equipo_id = equiposDisponibles[index];
+      const placa = carro_placas[index];
+
+      await db("equipo_vehiculo_cita ").insert({
+        equipo_id,
+        placa,
+        cita_id: uuid,
+      });
+    }
+
     return res.status(200).json("Cita agendata");
   } catch (error) {
     console.log(error);
@@ -111,24 +169,6 @@ routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
   }
 });
 
-routerUsers.post("/add-car", verifyToken, async (req, res) => {
-  const { placa, color, marca, modelo, user_id, año } = req.body;
-  try {
-    const car = {
-      placa,
-      color,
-      marca,
-      modelo,
-      user_id,
-      año,
-    };
-
-    await db("carros").insert(car);
-    res.status(200).json("Added");
-  } catch (error) {
-    console.log(error);
-  }
-});
 // TODO
 routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
@@ -226,4 +266,24 @@ routerUsers.delete("/eliminar-carro/:id", verifyToken, async (req, res) => {
       data: "No pudo ser actualizado!",
     });
   }
+});
+
+routerUsers.get("/horarios-disponibles", async (req, res) => {
+  const { fecha, hora_inicio, hora_fin } = req.body || {};
+
+
+  if (!fecha || !hora_fin || !hora_inicio)
+    return res.status(400).json("payload invalido");
+
+  try {
+    const { equiposDisponibles, canditad } = await obtenerEquiposDisponibles(
+      fecha,
+      hora_inicio,
+      hora_fin
+    );
+    res.status(200).json({
+      equipos: equiposDisponibles,
+      canditad,
+    });
+  } catch (error) {}
 });
