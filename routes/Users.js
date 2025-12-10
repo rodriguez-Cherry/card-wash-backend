@@ -72,7 +72,7 @@ routerUsers.post("/add-car", async (req, res) => {
   }
 });
 
-routerUsers.get("/horarios-disponibles", async (req, res) => {
+routerUsers.post("/horarios-disponibles", async (req, res) => {
   const { fecha, hora_inicio, hora_fin } = req.body || {};
 
   if (!fecha || !hora_fin || !hora_inicio)
@@ -180,8 +180,9 @@ routerUsers.get("/citas/:userId", async (req, res) => {
     const citas = await db("citas as c")
       .join("carro_cita as cc", "cc.cita_id", "c.cita_id")
       .join("carros as ca", "ca.placa", "cc.placa")
+      .join("servicios as se", "se.servicio_id", "c.servicio_id")
       .where("ca.user_id", userId)
-      .select("c.*")
+      .select("c.*", "se.tipo", "se.precio")
       .distinct();
 
     // const citas = await db("citas as ci")
