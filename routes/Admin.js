@@ -34,6 +34,37 @@ routerAdmin.get("/clientes-no-registrados", verifyToken, async (req, res) => {
     console.log(error);
   }
 });
+routerAdmin.get("/carros", verifyToken, async (req, res) => {
+  try {
+    const carros = await db("carros as ca")
+      .leftJoin("usuarios as us", "ca.user_id", "us.id")
+      .select("ca.*", "us.nombre", "us.apellido", "us.telefono");
+
+    return res.status(200).json({
+      data: carros,
+    });
+  } catch (error) {}
+});
+
+routerAdmin.post("/add-car", verifyToken, async (req, res) => {
+  const { placa, color, marca, modelo, user_id, año } = req.body;
+  try {
+    const car = {
+      placa,
+      color,
+      marca,
+      modelo,
+      user_id,
+      año,
+    };
+
+    await db("carros").insert(car);
+    res.status(200).json("Added");
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 // TODO
 routerAdmin.get("/ordenes", verifyToken, async (req, res) => {
   try {
@@ -96,36 +127,7 @@ routerAdmin.delete("/eliminar-cliente/:id", verifyToken, async (req, res) => {
   }
 });
 
-routerAdmin.get("/carros", verifyToken, async (req, res) => {
-  try {
-    const carros = await db("carros as ca")
-      .leftJoin("usuarios as us", "ca.user_id", "us.id")
-      .select("ca.*", "us.nombre", "us.apellido", "us.telefono");
 
-    return res.status(200).json({
-      data: carros,
-    });
-  } catch (error) {}
-});
-
-routerAdmin.post("/add-car", verifyToken, async (req, res) => {
-  const { placa, color, marca, modelo, user_id, año } = req.body;
-  try {
-    const car = {
-      placa,
-      color,
-      marca,
-      modelo,
-      user_id,
-      año,
-    };
-
-    await db("carros").insert(car);
-    res.status(200).json("Added");
-  } catch (error) {
-    console.log(error);
-  }
-});
 
 // TODO
 routerAdmin.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
