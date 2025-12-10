@@ -7,10 +7,10 @@ import crypto from "crypto";
 const db = new DataBase().getDB();
 export const routerUsers = Router();
 
+// Done FE
 routerUsers.get("/car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
-  console.log("id car", id);
   try {
     const carros = await db("carros").where({ user_id: id }).select("*");
     return res.status(200).json({
@@ -18,7 +18,7 @@ routerUsers.get("/car/:id", verifyToken, async (req, res) => {
     });
   } catch (error) {}
 });
-
+// Done FE
 routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
@@ -31,7 +31,7 @@ routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
     return res.status(500).json({ message: "Error" });
   }
 });
-
+// Done FE
 routerUsers.get("/servicios", async (req, res) => {
   try {
     const servicios = await db("servicios")
@@ -42,7 +42,7 @@ routerUsers.get("/servicios", async (req, res) => {
     });
   } catch (error) {}
 });
-
+// Done FE
 routerUsers.post("/add-car", async (req, res) => {
   const { placa, color, marca, modelo, user_id, año } = req.body;
 
@@ -91,6 +91,7 @@ routerUsers.get("/horarios-disponibles", async (req, res) => {
   } catch (error) {}
 });
 
+// Done FE
 routerUsers.post("/agendar", async (req, res) => {
   const { fecha, hora_inicio, hora_fin, estado, carro_placas, servicio_id } =
     req.body || {};
@@ -153,6 +154,7 @@ routerUsers.post("/agendar", async (req, res) => {
   }
 });
 
+// Done FE
 routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
@@ -171,6 +173,7 @@ routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
   }
 });
 
+// Done FE
 routerUsers.get("/citas/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
@@ -204,6 +207,7 @@ routerUsers.get("/citas/:userId", async (req, res) => {
   }
 });
 
+// Done FE
 routerUsers.put("/actualizar-carro/:placa", async (req, res) => {
   const { placa } = req.params;
   const { color, marca, modelo, user_id, año } = req.body;
@@ -263,6 +267,7 @@ routerUsers.put("/actualizar-carro/:placa", async (req, res) => {
 //   }
 // });
 
+// Done FE
 routerUsers.delete("/eliminar-carro/:placa", async (req, res) => {
   const { placa } = req.params;
   if (!placa) {

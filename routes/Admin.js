@@ -46,10 +46,17 @@ routerAdmin.get("/carros", verifyToken, async (req, res) => {
     });
   } catch (error) {}
 });
-
+// Done FE
 routerAdmin.post("/add-car", verifyToken, async (req, res) => {
   const { placa, color, marca, modelo, user_id, año } = req.body;
+  if (!placa || !color || !marca || !modelo || !user_id || !año)
+    return res.status(400).json("Payload invalido");
+
   try {
+    const placaExistente = await db("carros").where({ placa }).select("placa");
+    if (!placaExistente) {
+      return res.status(400).json("Este placa ya existe");
+    }
     const car = {
       placa,
       color,
