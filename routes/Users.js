@@ -5,24 +5,12 @@ import { verifyToken } from "../utils/verificarToken.js";
 const db = new DataBase().getDB();
 export const routerUsers = Router();
 
-// routerUsers.get("/cars", verifyToken, async (req, res) => {
-//   try {
-//     const carros = await db("carros").where({ estado: "activo" }).select("*");
-//     return res.status(200).json({
-//       data: carros,
-//     });
-//   } catch (error) {}
-// });
-
 routerUsers.get("/car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
   console.log("id car", id);
   try {
-    const carros = await db("carros")
-      .where({ user_id: id })
-      .andWhere({ estado: "activo" })
-      .select("*");
+    const carros = await db("carros").where({ user_id: id }).select("*");
     return res.status(200).json({
       data: carros,
     });
@@ -32,13 +20,14 @@ routerUsers.get("/car/:id", verifyToken, async (req, res) => {
 routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
-  console.log("id car", id);
   try {
     const carro = await db("carros").where({ id }).select("*").first();
     return res.status(200).json({
       data: carro,
     });
-  } catch (error) {}
+  } catch (error) {
+    return res.status(500).json({ message: "Error" });
+  }
 });
 
 routerUsers.get("/servicios", async (req, res) => {
@@ -52,9 +41,13 @@ routerUsers.get("/servicios", async (req, res) => {
   } catch (error) {}
 });
 
+// TODO
 routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
   const { userId } = req.params;
   try {
+
+
+
     const citas = await db("citas as ci")
       .where("ci.user_id", userId)
       .leftJoin("servicios as se", "ci.servicio_id", "se.id")
@@ -78,6 +71,7 @@ routerUsers.get("/citas/:userId", verifyToken, async (req, res) => {
   }
 });
 
+// TODO
 routerUsers.post("/agendar", verifyToken, async (req, res) => {
   const { fecha, user_id, carros_id, servicio_id } = req.body;
 
@@ -101,6 +95,7 @@ routerUsers.post("/agendar", verifyToken, async (req, res) => {
   }
 });
 
+// TODO
 routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
 
@@ -117,15 +112,15 @@ routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
 });
 
 routerUsers.post("/add-car", verifyToken, async (req, res) => {
-  const { color, marca, modelo, user_id, año, estado } = req.body;
+  const { placa, color, marca, modelo, user_id, año } = req.body;
   try {
     const car = {
+      placa,
       color,
       marca,
       modelo,
       user_id,
       año,
-      estado,
     };
 
     await db("carros").insert(car);
@@ -134,6 +129,7 @@ routerUsers.post("/add-car", verifyToken, async (req, res) => {
     console.log(error);
   }
 });
+// TODO
 routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
   const { color, marca, modelo, user_id, año, estado } = req.body;
@@ -172,16 +168,17 @@ routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
     });
   }
 });
+// TODO
 routerUsers.put("/actualizar-carro/:id", verifyToken, async (req, res) => {
   const { id } = req.params;
-  const { color, marca, modelo, user_id, año, estado } = req.body;
+  const { placa, color, marca, modelo, user_id, año } = req.body;
   if (!id) {
     return res.status(400).json({
       data: "No carro id proveido",
     });
   }
   try {
-    const payload = { color, marca, modelo, user_id, año, estado };
+    const payload = { placa, color, marca, modelo, user_id, año };
     await db("carros").where({ id }).update(payload);
     res.status(200).json("Carro actualizado!");
   } catch (error) {
@@ -191,45 +188,42 @@ routerUsers.put("/actualizar-carro/:id", verifyToken, async (req, res) => {
   }
 });
 
-// routerUsers.get("/all-cars", async (req, res) => {
-//   const id = "ab9a9974-cfe1-11f0-9a7a-c03eba484fce";
-//   try {
-//     const todasCitas = await db("citas").select("*");
+// TODO
+routerUsers.delete("/eliminar-carro/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { color, marca, modelo, user_id, año } = req.body;
+  if (!id) {
+    return res.status(400).json({
+      data: "No carro id proveido",
+    });
+  }
+  try {
+    const todasCitas = await db("citas").select("*");
 
-//     const todasCitasActivas = todasCitas.filter((todaActiva) =>
-//       ["pendiente", "en proceso"].includes(todaActiva?.estado)
-//     );
+    const todasCitasActivas = todasCitas.filter((todaActiva) =>
+      ["pendiente", "en proceso"].includes(todaActiva?.estado)
+    );
 
-//     const citasRelacionadas = todasCitasActivas?.filter((citas) =>
-//       citas.carros_ids.includes(id)
-//     );
+    const citasRelacionadas = todasCitasActivas?.filter((citas) =>
+      citas.carros_ids.includes(id)
+    );
 
-//     if (citasRelacionadas.length > 0) {
-//       citasRelacionadas.forEach(async (cita) => {
-//         const citaActualizada = {
-//           ...cita,
-//           estado: "cancelado",
-//         };
-//         await db("citas").update(citaActualizada).where({ id: cita.id });
-//       });
-//     }
+    if (citasRelacionadas.length > 0) {
+      citasRelacionadas.forEach(async (cita) => {
+        const citaActualizada = {
+          ...cita,
+          estado: "cancelado",
+        };
+        await db("citas").update(citaActualizada).where({ id: cita.id });
+      });
+    }
 
-//     return res.json({ todasCitasActivas, citasRelacionadas });
-//   } catch (error) {}
-// });
-
-// routerUsers.post("/eliminar/:id", verifyToken, async (req, res) => {
-//   const { id } = req.params;
-//   const { color, marca, modelo, user_id, año } = req.body;
-//   if (!id) {
-//     return res.status(400).json("No id proveido");
-//   }
-//   try {
-//     const payload = { color, marca, modelo, user_id, año, estado: "inactivo" };
-
-//     await db("carros").update(payload).where({ id: id });
-//     res.status(200).json("deleted");
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
+    const payload = { color, marca, modelo, user_id, año, estado };
+    await db("carros").where({ id }).update(payload);
+    res.status(200).json("Carro actualizado!");
+  } catch (error) {
+    return res.status(500).json({
+      data: "No pudo ser actualizado!",
+    });
+  }
+});
