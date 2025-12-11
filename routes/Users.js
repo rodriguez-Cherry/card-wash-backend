@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { DataBase } from "../db/index.js";
 import { verifyToken } from "../utils/verificarToken.js";
-import { obtenerEquiposDisponibles } from "../utils/obtenerEquiposDisponibles.js";
+import {
+  obtenerCarrosAgendados,
+  obtenerEquiposDisponibles,
+} from "../utils/obtenerEquiposDisponibles.js";
 import crypto from "crypto";
 
 const db = new DataBase().getDB();
@@ -183,13 +186,7 @@ routerUsers.get("/citas/:userId", async (req, res) => {
       .join("carros as ca", "ca.placa", "cc.placa")
       .join("servicios as se", "se.servicio_id", "c.servicio_id")
       .where("ca.user_id", userId)
-      .select(
-        "c.*",
-        "se.tipo",
-        "se.precio",
-        "se.tiempo_estimado",
-        "ca.placa"
-      )
+      .select("c.*", "se.tipo", "se.precio", "se.tiempo_estimado", "ca.placa")
       .distinct();
 
     const citas = {};
@@ -199,6 +196,7 @@ routerUsers.get("/citas/:userId", async (req, res) => {
         citas[row.cita_id] = {
           cita_id: row.cita_id,
           fecha: row.fecha,
+          hora_inicio: row.hora_inicio,
           estado: row.estado,
           precio: row.precio,
           tipo: row.tipo,
@@ -298,7 +296,6 @@ routerUsers.put("/actualizar-carro/:placa", async (req, res) => {
 //   }
 // });
 
-
 // Done FE
 routerUsers.delete("/eliminar-carro/:placa", async (req, res) => {
   const { placa } = req.params;
@@ -325,5 +322,28 @@ routerUsers.delete("/eliminar-carro/:placa", async (req, res) => {
     return res.status(500).json({
       data: "No pudo ser eliminado!",
     });
+  }
+});
+
+routerUsers.post("/verificar-placas-disponible", async (req, res) => {
+  const { placas, fecha } = req.body;
+
+  try {
+    const { placasOcupadas } = await obtenerCarrosAgendados(fecha, placas);
+
+    let unoEstaAgendado = null;
+
+    for (let placa of placasOcupadas) {
+      if (placas.includes(placa)) {
+        unoEstaAgendado = true;
+      }
+    }
+
+    return res.status(200).json({
+      placasOcupadas,
+      unoEstaAgendado
+    });
+  } catch (error) {
+    console.log();
   }
 });

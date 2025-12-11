@@ -22,3 +22,23 @@ export async function obtenerEquiposDisponibles(fecha, hora_inicio, hora_fin) {
     canditad: equiposIds?.length,
   };
 }
+
+export async function obtenerCarrosAgendados(fecha, placas) {
+  // Subquery: Buscar los vehículos que YA están agendados en esa fecha
+  const vehiculosAgendados = await db("equipo_vehiculo_cita as ec")
+    .join("citas as c", "ec.cita_id", "c.cita_id")
+    .where("c.fecha", fecha)
+    .whereIn("ec.placa", placas)   // solo verifica las placas enviadas
+    .select("ec.placa", "ec.cita_id", "ec.equipo_id");
+
+  // Extraer solo las placas que están ocupadas
+  const placasOcupadas = vehiculosAgendados.map(v => v.placa);
+
+  // Filtrar placas disponibles
+  const placasDisponibles = placas.filter(p => !placasOcupadas.includes(p));
+
+  return {
+    placasOcupadas,
+    placasDisponibles,
+  };
+}
