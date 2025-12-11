@@ -2,6 +2,7 @@ import express from "express";
 import { DataBase } from "../db/index.js";
 import { verifyToken } from "../utils/verificarToken.js";
 import { conserguirCitasConUsuarioyCarros } from "../utils/conseguirCitas.js";
+import crypto from "crypto";
 
 export const routerAdmin = express.Router();
 const db = new DataBase().getDB();
@@ -164,9 +165,10 @@ routerAdmin.delete("/eliminar-cliente/:id", async (req, res) => {
   }
 });
 
+// Done FE
 routerAdmin.post("/cancelar-cita/:cita_id", async (req, res) => {
   const { cita_id } = req.params || {};
-  const { razon } = req.body || {};
+  const { razon, estado } = req.body || {};
 
   if (!cita_id) {
     return res.status(400).json("No id proveido");
@@ -174,6 +176,10 @@ routerAdmin.post("/cancelar-cita/:cita_id", async (req, res) => {
 
   if (!razon) {
     return res.status(400).json("No razon proveida");
+  }
+
+  if (!estado) {
+    return res.status(400).json("No estado proveido");
   }
 
   try {
@@ -197,22 +203,27 @@ routerAdmin.post("/cancelar-cita/:cita_id", async (req, res) => {
 
     const user_id = carrosPorCita[0]?.user_id;
     const usuario = await db("usuarios")
-      .where({ id:user_id })
+      .where({ id: user_id })
       .select("nombre", "apellido", "telefono")
       .first();
 
     await db("facturas_historial").insert({
       factura_id: cita_id,
+      fecha: cita?.fecha,
+      hora: cita?.hora_inicio,
       nombre: usuario?.nombre,
       apellido: usuario?.apellido,
       telefono: usuario?.telefono,
       servicio_nombre: servicio?.tipo,
       precio: servicio?.precio,
       descripcion: razon,
+      estado,
     });
 
     for (const carro of carrosPorCita) {
+      const uuid = crypto.randomUUID();
       await db("facturas_historial_carros").insert({
+        factura_historial_carro_id: uuid,
         factura_id: cita_id,
         placa: carro.placa,
         marca: carro.marca,
@@ -233,21 +244,41 @@ routerAdmin.post("/cancelar-cita/:cita_id", async (req, res) => {
   }
 });
 
-// Cajero rutas
-// TODO
-routerAdmin.put("/update-ordenes", verifyToken, async (req, res) => {
-  const { placa, fecha, estado, user_id, servicio_id, carros_ids } = req.body;
+// Done FE
+routerAdmin.get("/historial-facturas", async (req, res) => {
+  try {
+    const facturas = await db("facturas_historial").select("*");
 
-  if (!id || !fecha || !estado || !user_id || !servicio_id || !carros_ids)
-    return res.status.json("No payload");
+    for (let index = 0; index < facturas.length; index++) {
+      const factura = facturas[index];
+      const carrosPorCita = await db("facturas_historial_carros")
+        .where({ factura_id: factura?.factura_id })
+        .select("*");
+
+      factura["carros"] = carrosPorCita || [];
+    }
+
+    res.status(200).json({
+      data: facturas,
+    });
+  } catch (error) {
+
+    console.log(error)
+  }
+});
+
+// Cajero rutas
+// Done FE
+routerAdmin.put("/update-orden/:cita_id", async (req, res) => {
+  const { cita_id } = req.params || {};
+  const { estado } = req.body || {};
+
+  if (!cita_id || !estado) return res.status(400).json("No payload");
 
   try {
-    const cita = { id, fecha, estado, user_id, servicio_id, carros_ids };
-    const citas = await db("citas").update(cita).where({ id });
+    const cita = await db("citas").where({ cita_id }).update({ estado });
 
-    return res.status(200).json({
-      data: citas,
-    });
+    return res.status(200).json("Se actualizo la orden!");
   } catch (error) {
     console.log(error);
     res.status(500).json("Error ");
