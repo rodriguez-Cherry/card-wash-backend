@@ -19,11 +19,11 @@ routerUsers.get("/car/:id", verifyToken, async (req, res) => {
   } catch (error) {}
 });
 // Done FE
-routerUsers.get("/car-por-id/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
+routerUsers.get("/car-por-placa/:placa", verifyToken, async (req, res) => {
+  const { placa } = req.params;
 
   try {
-    const carro = await db("carros").where({ id }).select("*").first();
+    const carro = await db("carros").where({ placa }).select("*").first();
     return res.status(200).json({
       data: carro,
     });
@@ -72,6 +72,7 @@ routerUsers.post("/add-car", async (req, res) => {
   }
 });
 
+// Done FE
 routerUsers.post("/horarios-disponibles", async (req, res) => {
   const { fecha, hora_inicio, hora_fin } = req.body || {};
 
@@ -177,13 +178,42 @@ routerUsers.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
 routerUsers.get("/citas/:userId", async (req, res) => {
   const { userId } = req.params;
   try {
-    const citas = await db("citas as c")
+    const rows = await db("citas as c")
       .join("carro_cita as cc", "cc.cita_id", "c.cita_id")
       .join("carros as ca", "ca.placa", "cc.placa")
       .join("servicios as se", "se.servicio_id", "c.servicio_id")
       .where("ca.user_id", userId)
-      .select("c.*", "se.tipo", "se.precio")
+      .select(
+        "c.*",
+        "se.tipo",
+        "se.precio",
+        "se.tiempo_estimado",
+        "ca.placa"
+      )
       .distinct();
+
+    const citas = {};
+
+    for (const row of rows) {
+      if (!citas[row.cita_id]) {
+        citas[row.cita_id] = {
+          cita_id: row.cita_id,
+          fecha: row.fecha,
+          estado: row.estado,
+          precio: row.precio,
+          tipo: row.tipo,
+          tiempo_estimado: row.tiempo_estimado,
+          // usuario: {
+          //   id: row.user_id,
+          //   nombre: row.user_nombre,
+          //   email: row.user_email,
+          // },
+          carros_placas: [],
+        };
+      }
+
+      citas[row.cita_id].carros_placas.push(row.placa);
+    }
 
     // const citas = await db("citas as ci")
     //   .where("ci.user_id", userId)
@@ -200,7 +230,7 @@ routerUsers.get("/citas/:userId", async (req, res) => {
     // .join("servicios as se", "ci.servicio_id", "se.id")
 
     return res.status(200).json({
-      data: citas,
+      data: Object.values(citas),
     });
   } catch (error) {
     console.log(error);
@@ -267,6 +297,7 @@ routerUsers.put("/actualizar-carro/:placa", async (req, res) => {
 //     });
 //   }
 // });
+
 
 // Done FE
 routerUsers.delete("/eliminar-carro/:placa", async (req, res) => {

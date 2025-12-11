@@ -5,7 +5,7 @@ import { conserguirCitasConUsuarioyCarros } from "../utils/conseguirCitas.js";
 
 export const routerAdmin = express.Router();
 const db = new DataBase().getDB();
-
+// Done FE
 routerAdmin.get("/clientes", verifyToken, async (req, res) => {
   try {
     const clientes = await db("usuarios as us")
@@ -24,6 +24,7 @@ routerAdmin.get("/clientes", verifyToken, async (req, res) => {
     console.log(error);
   }
 });
+// Done FE
 routerAdmin.get("/clientes-no-registrados", verifyToken, async (req, res) => {
   try {
     const clientes = await db("usuarios").where({ logueado: 0 }).select("*");
@@ -35,6 +36,7 @@ routerAdmin.get("/clientes-no-registrados", verifyToken, async (req, res) => {
     console.log(error);
   }
 });
+// Done FE
 routerAdmin.get("/carros", verifyToken, async (req, res) => {
   try {
     const carros = await db("carros as ca")
@@ -73,6 +75,7 @@ routerAdmin.post("/add-car", verifyToken, async (req, res) => {
   }
 });
 
+// Done FE
 routerAdmin.post("/agregar-cliente", verifyToken, async (req, res) => {
   const { nombre, apellido, telefono, direccion, rol } = req.body;
 
@@ -92,6 +95,7 @@ routerAdmin.post("/agregar-cliente", verifyToken, async (req, res) => {
   }
 });
 
+// Done FE
 routerAdmin.get("/ordenes", async (req, res) => {
   try {
     const citas = await conserguirCitasConUsuarioyCarros();
@@ -118,6 +122,7 @@ routerAdmin.get("/ordenes", async (req, res) => {
   }
 });
 
+// Done FE
 routerAdmin.delete("/eliminar-cliente/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -159,16 +164,67 @@ routerAdmin.delete("/eliminar-cliente/:id", async (req, res) => {
   }
 });
 
-routerAdmin.delete("/eliminar-cita/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
+routerAdmin.post("/cancelar-cita/:cita_id", async (req, res) => {
+  const { cita_id } = req.params || {};
+  const { razon } = req.body || {};
 
-  if (!id) {
+  if (!cita_id) {
     return res.status(400).json("No id proveido");
   }
+
+  if (!razon) {
+    return res.status(400).json("No razon proveida");
+  }
+
   try {
-    await db("carro_cita").delete().where({ cita_id: id });
-    await db("equipo_vehiculo_cita").delete().where({ cita_id: id });
-    await db("citas").delete().where({ cita_id: id });
+    const cita = await db("citas")
+      .where({ cita_id: cita_id })
+      .select("*")
+      .first();
+    const servicio = await db("servicios")
+      .where({ servicio_id: cita.servicio_id })
+      .select("*")
+      .first();
+
+    const carrosPlacas = await db("carro_cita")
+      .where({ cita_id })
+      .select("placa");
+    const carrosPorCita = [];
+    for (let placa of carrosPlacas) {
+      const carro = await db("carros").where({ placa: placa.placa }).first();
+      carrosPorCita.push(carro);
+    }
+
+    const user_id = carrosPorCita[0]?.user_id;
+    const usuario = await db("usuarios")
+      .where({ id:user_id })
+      .select("nombre", "apellido", "telefono")
+      .first();
+
+    await db("facturas_historial").insert({
+      factura_id: cita_id,
+      nombre: usuario?.nombre,
+      apellido: usuario?.apellido,
+      telefono: usuario?.telefono,
+      servicio_nombre: servicio?.tipo,
+      precio: servicio?.precio,
+      descripcion: razon,
+    });
+
+    for (const carro of carrosPorCita) {
+      await db("facturas_historial_carros").insert({
+        factura_id: cita_id,
+        placa: carro.placa,
+        marca: carro.marca,
+        modelo: carro.modelo,
+        año: carro.año,
+        color: carro.color,
+      });
+    }
+
+    await db("carro_cita").delete().where({ cita_id });
+    await db("equipo_vehiculo_cita").delete().where({ cita_id });
+    await db("citas").delete().where({ cita_id });
 
     return res.status(200).json("Cita Eliminada!");
   } catch (error) {

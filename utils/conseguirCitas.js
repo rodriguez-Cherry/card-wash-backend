@@ -8,6 +8,7 @@ export const conserguirCitasConUsuarioyCarros = async () => {
     .join("usuarios as u", "u.id", "ca.user_id")
     .join("servicios as se", "se.servicio_id", "c.servicio_id")
     .select(
+      "c.estado",
       "c.cita_id as cita_id",
       "c.fecha",
 
@@ -17,11 +18,10 @@ export const conserguirCitasConUsuarioyCarros = async () => {
 
       "u.id as user_id",
       "u.nombre as user_nombre",
+      "u.apellido",
       "u.email as user_email",
 
-      "ca.marca",
-      "ca.modelo",
-      "ca.placa"
+      "ca.placa",
     );
 
   const citas = {};
@@ -31,23 +31,21 @@ export const conserguirCitasConUsuarioyCarros = async () => {
       citas[row.cita_id] = {
         cita_id: row.cita_id,
         fecha: row.fecha,
+        estado: row.estado,
         precio: row.precio,
         tipo: row.tipo,
         tiempoEstimado: row.tiempo_estimado,
         usuario: {
           id: row.user_id,
           nombre: row.user_nombre,
+          apellido: row.apellido,
           email: row.user_email,
         },
-        carros: [],
+        carros_placas: [],
       };
     }
 
-    citas[row.cita_id].carros.push({
-      marca: row.marca,
-      modelo: row.modelo,
-      placa: row.placa,
-    });
+    citas[row.cita_id].carros_placas.push(row.placa);
   }
 
   return Object.values(citas);
