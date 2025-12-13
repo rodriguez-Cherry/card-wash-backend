@@ -11,7 +11,7 @@ export const conserguirCitasConUsuarioyCarros = async () => {
       "c.estado",
       "c.cita_id as cita_id",
       "c.fecha",
-
+      "c.hora_inicio",
       "se.tipo",
       "se.precio",
       "se.tiempo_estimado",
@@ -32,9 +32,10 @@ export const conserguirCitasConUsuarioyCarros = async () => {
         cita_id: row.cita_id,
         fecha: row.fecha,
         estado: row.estado,
+        hora_inicio: row.hora_inicio,
         precio: row.precio,
         tipo: row.tipo,
-        tiempoEstimado: row.tiempo_estimado,
+        tiempo_estimado: row.tiempo_estimado,
         usuario: {
           id: row.user_id,
           nombre: row.user_nombre,

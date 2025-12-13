@@ -256,46 +256,6 @@ routerUsers.put("/actualizar-carro/:placa", async (req, res) => {
   }
 });
 
-// Not used
-// routerUsers.put("/update-car/:id", verifyToken, async (req, res) => {
-//   const { id } = req.params;
-//   const { color, marca, modelo, user_id, año, estado } = req.body;
-//   if (!id) {
-//     return res.status(400).json({
-//       data: "No carro id proveido",
-//     });
-//   }
-//   try {
-//     const todasCitas = await db("citas").select("*");
-
-//     const todasCitasActivas = todasCitas.filter((todaActiva) =>
-//       ["pendiente", "en proceso"].includes(todaActiva?.estado)
-//     );
-
-//     const citasRelacionadas = todasCitasActivas?.filter((citas) =>
-//       citas.carros_ids.includes(id)
-//     );
-
-//     if (citasRelacionadas.length > 0) {
-//       citasRelacionadas.forEach(async (cita) => {
-//         const citaActualizada = {
-//           ...cita,
-//           estado: "cancelado",
-//         };
-//         await db("citas").update(citaActualizada).where({ id: cita.id });
-//       });
-//     }
-
-//     const payload = { color, marca, modelo, user_id, año, estado };
-//     await db("carros").where({ id }).update(payload);
-//     res.status(200).json("Carro actualizado!");
-//   } catch (error) {
-//     return res.status(500).json({
-//       data: "No pudo ser actualizado!",
-//     });
-//   }
-// });
-
 // Done FE
 routerUsers.delete("/eliminar-carro/:placa", async (req, res) => {
   const { placa } = req.params;
@@ -331,19 +291,19 @@ routerUsers.post("/verificar-placas-disponible", async (req, res) => {
   try {
     const { placasOcupadas } = await obtenerCarrosAgendados(fecha, placas);
 
-    let unoEstaAgendado = null;
+    let unoEstaAgendado = [];
 
     for (let placa of placasOcupadas) {
       if (placas.includes(placa)) {
-        unoEstaAgendado = true;
+        unoEstaAgendado.push(true);
       }
     }
 
     return res.status(200).json({
       placasOcupadas,
-      unoEstaAgendado
+      unoEstaAgendado: unoEstaAgendado?.some((uno) => uno === true) || false,
     });
   } catch (error) {
-    console.log();
+    console.log(error);
   }
 });
